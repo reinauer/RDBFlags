@@ -1,0 +1,11 @@
+#
+# SAS/C 6.51 smakefile for "RDBFlags.c"
+#
+
+RDBFlags: RDBFlags.c
+  sc resopt\
+ ansi strict wrn=a ign=61,148\
+ opt optsched data=fo nostkchk strmer\
+ link nostrt noicon csrc=$*.c
+  protect $@ +p
+  delete $@.lnk $@.o quiet

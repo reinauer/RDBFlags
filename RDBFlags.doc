@@ -1,0 +1,246 @@
+
+
+                            Welcome to RDBFlags!
+                           ======================
+
+
+                Copyright © 1994,1995 by Andreas M. Kirchwitz
+                             Seesener Straﬂe 69
+                           D-10709 Berlin, Germany
+                   UUCP/Internet: amk@zikzak.in-berlin.de
+
+
+           Thanks to Ralph Babel (author of "The Amiga Guru Book")
+                            and Matthias Scheler.
+
+
+               This program is freely distributable giftware.
+                       Send me a gift if you like it.
+
+
+
+This program lets you modify various flags in the RDB (Rigid Disk Block) of
+your harddisk drives. It has no GUI and it doesn't restrict you in making
+your harddisk a "totally useless piece of shit". So be careful!
+
+It's absolutely harmless to call "RDBFlags" without any arguments or just
+with an alternative device name or unit number: the program will only read
+your RDB (if existing) and show its flags. Nothing will be modified.
+
+Read this manual carefully! Most of this program's options change flags in
+the RDB of your harddisk. Some options are dangerous because you can make
+your drive inaccessable (at least with your current driver software). Then it
+may help to set some jumpers on the harddisk to ignore the RDB settings, but
+better don't count on that. Other options are less dangerous because they can
+be set back easily if something won't work.
+
+Your harddisk driver software may not support all flags you can set in the
+RDB. So, don't despair if nothing special happens after a reboot ;-)
+
+"RDBFlags" validates the RDB checksum as well as the sector size (also know
+as block size) in various ways. If your RDB doesn't pass the validity checks
+successfully, "RDBFlags" does nothing.
+
+"RDBFlags" is pure (p-Flag set), thus it can be made resident. It requires
+AmigaOS 2.0 (or higher).
+
+
+
+Options? Ah... options! Call "RDBFlags ?" for a list of available options.
+These are the harmless options. Nothing will be changed. "RDBFlags" will just
+show you the current settings stored in the RDB.
+
+
+	Device=<device>
+	---------------
+
+		Specify the driver software (device) for the harddisk.
+		The default is "scsi.device", eg, for A2091 and A3000's
+		internal controller.
+
+		You're not limited to SCSI. IDE and other controllers
+		will work as well if they support Commodore's RDB standard.
+
+
+	Unit=<number>
+	-------------
+
+		Specify the unit number of the harddisk you want to access.
+		The default is unit "0".
+
+
+	SectorSize=<number>
+	-------------------
+
+		If your old driver software doesn't support the command
+		TD_GETGEOMETRY to read the actual sector size (also known
+		as block size) from the drive, this option let's you specify
+		the sector size in bytes. The default is 512 bytes.
+
+		In case that TD_GETGEOMETRY fails, RDBFlags outputs a
+		warning message (with error condition) but continues to
+		work. Use this option to set the sector size manually.
+
+		This option is ignored if TD_GETGEOMETRY succeeds.
+
+
+
+The following options may change your RDB but it should be possible to
+restore the old settings (eg, with "RDBFlags" on a bootable floppy disk) if
+something goes wrong.
+
+
+	LastDisk or NoLastDisk
+	--------    ----------
+
+		Maybe the most useful option of this program. This flag
+		signals the driver software to abort the scanning of further
+		units and to boot now.
+
+		Though this program is not limited to SCSI host adapters
+		(it also works with IDE controllers if they support RDB)
+		this is a typical SCSI scenario:
+
+		When the Amiga boots, the driver checks all SCSI addresses
+		(from 0 to 7) for drives. Some drivers will "hang" for
+		a remarkable period of time when scanning drives that
+		support removable media and no medium is currently present
+		(eg, SyQuest and CD-ROM drives).
+
+		For example, on the A3000's internal host adapter, the trick
+		is quite simple (to avoid waiting):
+
+		Assign the lower SCSI addresses to the drives that respond
+		very quicky (eg, harddisks) and the higher numbers to the
+		drives that may be very slow (eg, SyQuest, CD-ROM).  Then
+		set the "LastDisk" flag on the last "quick" drive you have.
+		This way all SCSI targets AFTER this drive (with a higher
+		SCSI address) will not be mounted automatically at boot-time.
+		You can add these drives later (when you need them) with
+		"Mount" (eg, CD-ROM) or programs like "SCSIMounter" (eg,
+		SyQuest) by Martin A. Blatter.
+
+		BTW: From AmigaOS 3.1 on the internal host adapter of the
+		A3000 doesn't really need "LastDisk" anymore because CBM's
+		scsi.device will skip those "slow" drives very quickly.
+
+		Some SCSI host adapters (or their driver software) don't
+		scan SCSI addresses sequentially, so "LastDisk" will have
+		a somewhat different meaning.  It's not guaranteed that
+		all drives will be mounted which have a smaller address
+		than the drive with "LastDisk" set in its RDB.
+
+		Recapitulating, the "LastDisk" flag just means:
+
+		When scanning (and trying to automount) drives at boot-time,
+		then stop scanning and boot immediately if the "LastDisk"
+		flag is found in a disk's RDB.  In general, no assumptions
+		can be made about the state of the other drives (but this
+		depends on your driver software).
+
+		So you might want to experiment a little bit with this
+		flag to fit your needs.  Some driver software treats
+		"LastDisk" and "LastTarget" as equal (although they are
+		not), so think about it when experimenting ;-)
+
+
+	LastTarget or NoLastTarget
+	----------    ------------
+
+		If the "LastTarget" flag is set on a drive, no further
+		SCSI targets will be scanned. The meaning of this flag
+		is not absolutely clear; at first sight it looks similar
+		to the "LastDisk" flag, but it isn't.
+
+		Some people say this flag is for buggy drives that
+		respond to all SCSI addresses. It's obvious that you
+		can only use exactly one such drive on the SCSI bus.
+
+		Maybe it's a good idea to don't use it at all ;-)
+
+
+
+Other useful utilities (not only in case of problems or failure) are
+"SetBatt" (modify battery memory in A3000, by Andreas M. Kirchwitz) and
+"SCSIMounter" (mount/update devices after boot-time, by Martin A. Blatter).
+
+Okay, and now for some more options ...
+
+The following options may change your RDB and are VERY DANGEROUS because they
+could make your harddisk unusable. Use only if you know for sure that your
+harddisk supports it.
+
+
+	LastLun or NoLastLun
+	-------    ---------
+
+		Each SCSI target (0-7, except for the host adapter) is
+		subdivided into logical unit numbers (LUN 0-7).
+
+		If the "LastLun" flag is found on a disk, the driver
+		software will not search for LUNs (logical unit numbers)
+		greater then the current one (on this SCSI target).
+
+		For drives with only one logical unit the "LastLun" flag is
+		typically set in the RDB of the disk with LUN 0.
+
+		This flag is similar to "LastDisk", except that "LastLun"
+		marks the last LUN on one SCSI target (and not the last
+		SCSI target on the SCSI bus).
+
+
+	Reselect or NoReselect
+	--------    ----------
+
+		Reselection is useful for slow drives or actions that will
+		take a long time to execute (eg, CD-ROMs). It allows the
+		drive to disconnect from the bus, do its job and finally
+		reconnect to the bus when its done. In the meantime the bus
+		is free for other tasks.
+
+		If your driver software or your drive doesn't support
+		Reselection (disconnect/reconnect) correctly, then set
+		the "NoReselect" flag so that the driver software doesn't
+		ask for Reselection when talking to this drive.
+
+
+	Sync or NoSync
+	----    ------
+
+		Maybe the most dangerous option of this program. With this
+		flag you can set for each drive individually if it supports
+		synchronous transfer or not. If "NoSync" is set, the "slow"
+		(but by all drives supported) asynchronous transfer is used.
+
+		"So why is it dangerous", you may ask.  Now, some drives
+		that don't support sync transfer will not just say, "hey,
+		I don't support sync, let's talk async." They'll just hang.
+		Totally inaccessable until next reboot. But with the "Sync"
+		flag set in the RDB the driver software will ALWAYS ask for
+		sync at boot-time, so the drive will always hang. You will
+		NEVER reach a state to clear the "Sync" flag in the RDB,
+		if you don't have a host adapter that allows you to ignore
+		the RDB settings temporarily.
+
+		Set "Sync" only if you KNOW FOR SURE that the drive supports
+		synchronous transfer. Elsewhere, you may lose the contents
+		of your drive.
+
+		This is not supported by all drives and driver software,
+		so you may not notice any difference.  Some host adapters
+		only allow to toggle synchronous/asynchronous transfer
+		globally for all drives (eg, A3000 with its internal
+		battery memory).
+
+
+
+History
+-------
+
+1.2	initial release
+1.3	option "SectorSize" overrides dg_SectorSize from TD_GETGEOMETRY
+	(even if TD_GETGEOMETRY returns no error) because some drivers
+	don't set dg_SectorSize correctly
+
+ ___________________________________________________________________________
+|___________________________________________________END_TRANSMISSION________)
